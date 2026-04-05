@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>כלי איפיון רתמות חוטים v6 - עד 10 מחברים</title>
+    <title>כלי איפיון רתמות חוטים v7 - אורך אוטומטי + דיאגרמה מקצועית</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f4f4f4; line-height: 1.5; }
         h1 { color: #0066cc; }
@@ -10,16 +10,16 @@
         table { width: 100%; border-collapse: collapse; margin: 12px 0; }
         th, td { border: 1px solid #aaa; padding: 8px; text-align: center; }
         th { background: #e0e0e0; }
-        input, select, textarea { width: 95%; padding: 6px; box-sizing: border-box; }
+        input, select { width: 95%; padding: 6px; box-sizing: border-box; }
         button { padding: 9px 14px; margin: 5px; background: #0066cc; color: white; border: none; cursor: pointer; border-radius: 5px; }
         button:hover { background: #0055aa; }
         .delete { background: #cc3333; }
-        #diagram { border: 3px solid #0066cc; background: white; min-height: 720px; margin: 15px 0; padding: 15px; overflow-x: auto; }
+        #diagram { border: 3px solid #0066cc; background: white; min-height: 780px; margin: 15px 0; padding: 15px; overflow-x: auto; }
         .connector-box { border: 2px solid #0066cc; padding: 15px; margin-bottom: 20px; border-radius: 8px; background: #fafafa; }
     </style>
 </head>
 <body>
-    <h1>🛠 כלי איפיון רתמות חוטים v6 - עד 10 מחברים</h1>
+    <h1>🛠 כלי איפיון רתמות חוטים v7 - אורך אוטומטי + חיווט אמיתי</h1>
 
     <div class="section">
         <h2>1. ניהול פרויקטים</h2>
@@ -33,14 +33,14 @@
     </div>
 
     <div class="section">
-        <h2>2. מחברים (עד 10) + פונקציה + אביזרים + Pinout</h2>
+        <h2>2. מחברים (עד 10) + מיקום X + פונקציה + אביזרים</h2>
         <div id="connectorsContainer"></div>
         <button onclick="addConnector()">+ הוסף מחבר</button>
-        <span style="margin-right:20px; color:#555;">(ניתן להוסיף עד 10 מחברים)</span>
     </div>
 
     <div class="section">
-        <h2>3. טבלת חוטים + סימוניות</h2>
+        <h2>3. טבלת חוטים</h2>
+        <button onclick="updateAllLengths()">עדכן אורכים אוטומטית</button>
         <table id="wiresTable">
             <thead>
                 <tr>
@@ -82,7 +82,7 @@
     </div>
 
     <div class="section">
-        <h2>דיאגרמה משופרת (תומך עד 10 מחברים)</h2>
+        <h2>דיאגרמה מקצועית (חיווט אמיתי + עיקולים)</h2>
         <div id="diagram"></div>
     </div>
 
@@ -98,48 +98,45 @@
     <script>
         let connectors = [];
 
-        // אתחול עם 2 מחברים לדוגמה
         function initDefaultConnectors() {
             connectors = [
-                { id: "X1", function: "יחידת כוח", pins: [{pin:"1", signal:"VCC", color:"אדום"}, {pin:"2", signal:"GND", color:"שחור"}], accessories: { backshell: "Backshell", boot: "Boot 90°", gland: "", shield: "" } },
-                { id: "X2", function: "חיישן", pins: [{pin:"1", signal:"SIG", color:"לבן"}], accessories: { backshell: "", boot: "", gland: "PG9", shield: "סיכוך" } }
+                { id: "X1", function: "יחידת כוח", xPos: 0, pins: [{pin:"1", signal:"VCC", color:"אדום"}, {pin:"2", signal:"GND", color:"שחור"}], accessories: { backshell: "Backshell", boot: "Boot 90°", gland: "", shield: "" } },
+                { id: "X2", function: "חיישן", xPos: 45, pins: [{pin:"1", signal:"SIG", color:"לבן"}], accessories: { backshell: "", boot: "", gland: "PG9", shield: "סיכוך" } }
             ];
         }
 
         function renderConnectors() {
             const container = document.getElementById('connectorsContainer');
             container.innerHTML = '';
-            
             connectors.forEach((conn, cIndex) => {
                 let acc = conn.accessories || {};
                 let html = `
                     <div class="connector-box">
-                        <strong>מחבר ${cIndex+1}:</strong> 
-                        <input type="text" value="${conn.id}" onchange="updateConnectorId(${cIndex}, this.value)" style="width:80px; font-weight:bold;">
-                        
+                        <strong>מחבר:</strong> 
+                        <input type="text" value="${conn.id}" onchange="updateConnectorId(${cIndex}, this.value)" style="width:80px;font-weight:bold;">
+                        <strong>מיקום X (ס"מ):</strong> 
+                        <input type="number" value="${conn.xPos}" onchange="updateXPos(${cIndex}, this.value)" style="width:90px;">
                         <strong>יחידה / פונקציה:</strong> 
                         <input type="text" value="${conn.function || ''}" onchange="updateFunction(${cIndex}, this.value)" style="width:240px;">
-                        
-                        <button class="delete" onclick="deleteConnector(${cIndex})">מחק מחבר</button>
+                        <button class="delete" onclick="deleteConnector(${cIndex})">מחק</button>
 
-                        <h3>Pinout + שמות סיגנלים</h3>
+                        <h3>Pinout + סיגנלים</h3>
                         <table style="font-size:0.9em;">
                             <thead><tr><th>פין</th><th>סיגנל</th><th>צבע</th><th>פעולה</th></tr></thead>
                             <tbody id="pins-${cIndex}"></tbody>
                         </table>
-                        <button onclick="addPin(${cIndex})">+ הוסף פין</button>
+                        <button onclick="addPin(${cIndex})">+ פין</button>
 
                         <h3>אביזרי קצה</h3>
                         <table style="font-size:0.9em;">
                             <tr><td>BackShell</td><td><input value="${acc.backshell||''}" onchange="updateAcc(${cIndex},'backshell',this.value)"></td></tr>
-                            <tr><td>Boot / סופית</td><td><input value="${acc.boot||''}" onchange="updateAcc(${cIndex},'boot',this.value)"></td></tr>
+                            <tr><td>Boot</td><td><input value="${acc.boot||''}" onchange="updateAcc(${cIndex},'boot',this.value)"></td></tr>
                             <tr><td>נעל כבל</td><td><input value="${acc.gland||''}" onchange="updateAcc(${cIndex},'gland',this.value)"></td></tr>
                             <tr><td>סיכוך</td><td><input value="${acc.shield||''}" onchange="updateAcc(${cIndex},'shield',this.value)"></td></tr>
                         </table>
                     </div>`;
                 container.innerHTML += html;
 
-                // מילוי פינים
                 const pinBody = document.getElementById(`pins-${cIndex}`);
                 if (pinBody) {
                     pinBody.innerHTML = '';
@@ -156,27 +153,7 @@
             });
         }
 
-        function addConnector() {
-            if (connectors.length >= 10) {
-                alert("הגעת למקסימום של 10 מחברים");
-                return;
-            }
-            connectors.push({
-                id: `X${connectors.length + 1}`,
-                function: "",
-                pins: [],
-                accessories: { backshell: "", boot: "", gland: "", shield: "" }
-            });
-            renderConnectors();
-        }
-
-        function deleteConnector(cIndex) {
-            if (confirm(`למחוק מחבר ${connectors[cIndex].id}?`)) {
-                connectors.splice(cIndex, 1);
-                renderConnectors();
-            }
-        }
-
+        function updateXPos(cIndex, val) { connectors[cIndex].xPos = parseFloat(val) || 0; }
         function updateConnectorId(cIndex, val) { connectors[cIndex].id = val; }
         function updateFunction(cIndex, val) { connectors[cIndex].function = val; }
         function updateAcc(cIndex, field, val) {
@@ -185,7 +162,7 @@
         }
         function addPin(cIndex) {
             if (!connectors[cIndex].pins) connectors[cIndex].pins = [];
-            connectors[cIndex].pins.push({pin: "", signal: "", color: ""});
+            connectors[cIndex].pins.push({pin:"", signal:"", color:""});
             renderConnectors();
         }
         function updatePin(cIndex, pIndex, field, val) {
@@ -193,6 +170,23 @@
         }
         function deletePin(cIndex, pIndex) {
             connectors[cIndex].pins.splice(pIndex, 1);
+            renderConnectors();
+        }
+        function deleteConnector(cIndex) {
+            if (confirm(`למחוק ${connectors[cIndex].id}?`)) {
+                connectors.splice(cIndex, 1);
+                renderConnectors();
+            }
+        }
+        function addConnector() {
+            if (connectors.length >= 10) return alert("מקסימום 10 מחברים");
+            connectors.push({
+                id: `X${connectors.length + 1}`,
+                function: "",
+                xPos: connectors.length * 45,
+                pins: [],
+                accessories: { backshell: "", boot: "", gland: "", shield: "" }
+            });
             renderConnectors();
         }
 
@@ -218,15 +212,33 @@
             tbody.appendChild(row);
         }
 
-        function calculateSleeve() {
-            let totalArea = 0;
+        // === אורך חוט אוטומטי ===
+        function updateAllLengths() {
             document.querySelectorAll('#wiresTable tbody tr').forEach(row => {
-                const g = parseFloat(row.querySelector('.gauge').value) || 0;
-                const q = parseFloat(row.querySelector('.qty').value) || 1;
-                totalArea += Math.PI * (g/2)**2 * q;
+                const fromId = row.querySelector('.fromConn').value;
+                const toId = row.querySelector('.toConn').value;
+                if (fromId === toId) return;
+                
+                const fromConn = connectors.find(c => c.id === fromId);
+                const toConn = connectors.find(c => c.id === toId);
+                if (!fromConn || !toConn) return;
+                
+                const distance = Math.abs(toConn.xPos - fromConn.xPos);
+                const length = (distance * 1.1).toFixed(1); // 10% מרווח
+                row.querySelector('.length').value = length;
             });
-            const dia = (Math.sqrt(totalArea / Math.PI) * 2 * 1.28).toFixed(1);
-            document.getElementById('sleeveResult').innerHTML = `קוטר bundle משוער: <strong>${dia} מ"מ</strong>`;
+            alert("אורכי החוטים עודכנו אוטומטית לפי מיקומי המחברים!");
+        }
+
+        function calculateSleeve() { /* ... אותו חישוב */ 
+            let total = 0;
+            document.querySelectorAll('#wiresTable tbody tr').forEach(r => {
+                const g = parseFloat(r.querySelector('.gauge').value) || 0;
+                const q = parseFloat(r.querySelector('.qty').value) || 1;
+                total += Math.PI * (g/2)**2 * q;
+            });
+            const dia = (Math.sqrt(total / Math.PI) * 2 * 1.28).toFixed(1);
+            document.getElementById('sleeveResult').innerHTML = `Bundle: <strong>${dia} מ"מ</strong>`;
         }
 
         function generateCutlist() {
@@ -236,29 +248,29 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${row.querySelector('.partno').value || '-'}</td>
-                    <td>${row.querySelector('.length').value || '1.0'}</td>
+                    <td>${row.querySelector('.length').value || '-'}</td>
                     <td>${row.querySelector('.color').value || '-'}</td>
                     <td>${row.querySelector('.qty').value || '1'}</td>
-                    <td>${row.querySelector('.fromConn').value}:${row.querySelector('.fromPin').value || '?'} → ${row.querySelector('.toConn').value}:${row.querySelector('.toPin').value || '?'}</td>
-                    <td>${row.querySelector('.labelFrom').value || ''}</td>
-                    <td>${row.querySelector('.labelTo').value || ''}</td>
+                    <td>${row.querySelector('.fromConn').value}:${row.querySelector('.fromPin').value} → ${row.querySelector('.toConn').value}:${row.querySelector('.toPin').value}</td>
+                    <td>${row.querySelector('.labelFrom').value}</td>
+                    <td>${row.querySelector('.labelTo').value}</td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
         function generateHarness() {
-            const numConnectors = connectors.length;
-            const svgWidth = Math.max(1100, numConnectors * 180);
-            let svg = `<svg width="${svgWidth}" height="750" xmlns="http://www.w3.org/2000/svg">`;
+            const maxX = Math.max(...connectors.map(c => c.xPos)) || 100;
+            const svgWidth = Math.max(1100, maxX * 12 + 300);
+            let svg = `<svg width="${svgWidth}" height="820" xmlns="http://www.w3.org/2000/svg">`;
 
-            // ציור מחברים
+            // מחברים
             connectors.forEach((conn, i) => {
-                const x = 80 + i * 170;
+                const x = 80 + conn.xPos * 12;
                 svg += `
-                    <rect x="${x}" y="90" width="150" height="420" rx="18" fill="#f8f8f8" stroke="#0066cc" stroke-width="10"/>
-                    <text x="${x+75}" y="70" text-anchor="middle" font-size="22" font-weight="bold">${conn.id}</text>
-                    <text x="${x+75}" y="92" text-anchor="middle" font-size="15" fill="#555">${conn.function || ''}</text>
+                    <rect x="${x}" y="110" width="160" height="460" rx="25" fill="#f8f8f8" stroke="#0066cc" stroke-width="14"/>
+                    <text x="${x+80}" y="85" text-anchor="middle" font-size="26" font-weight="bold">${conn.id}</text>
+                    <text x="${x+80}" y="108" text-anchor="middle" font-size="17" fill="#444">${conn.function || ''}</text>
                 `;
 
                 // אביזרים
@@ -269,26 +281,41 @@
                     if (conn.accessories.gland) accStr.push("Gland");
                     if (conn.accessories.shield) accStr.push("Shield");
                 }
-                svg += `<text x="${x+75}" y="540" text-anchor="middle" font-size="12" fill="#0066cc">${accStr.join(" • ")}</text>`;
+                svg += `<text x="${x+80}" y="600" text-anchor="middle" font-size="14" fill="#0066cc">${accStr.join(" • ")}</text>`;
+
+                // פינים (עיגולים)
+                (conn.pins || []).forEach((p, j) => {
+                    const py = 150 + j * 38;
+                    svg += `<circle cx="${x+35}" cy="${py}" r="11" fill="#fff" stroke="#333" stroke-width="3"/>
+                            <text x="${x+35}" y="${py+5}" text-anchor="middle" font-size="14" fill="#222">${p.pin}</text>
+                            <text x="${x+130}" y="${py+5}" font-size="13" fill="#555">${p.signal}</text>`;
+                });
             });
 
-            // חוטים + סיגנלים
-            const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
+            // חיווט אמיתי עם עיקולים
+            const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c'];
             document.querySelectorAll('#wiresTable tbody tr').forEach((row, idx) => {
-                const label = row.querySelector('.labelFrom').value || row.querySelector('.color').value || '';
-                const y = 160 + (idx % 9) * 48;
-                const strokeColor = colors[idx % colors.length];
-                svg += `
-                    <line x1="230" y1="${y}" x2="${svgWidth - 180}" y2="${y + 10}" 
-                          stroke="${strokeColor}" stroke-width="7" stroke-opacity="0.9"/>
-                    <text x="${svgWidth/2}" y="${y-8}" text-anchor="middle" font-size="13" fill="#222">${label}</text>
-                `;
+                const fromId = row.querySelector('.fromConn').value;
+                const toId = row.querySelector('.toConn').value;
+                const label = row.querySelector('.labelFrom').value || row.querySelector('.color').value;
+                const fromConn = connectors.find(c => c.id === fromId);
+                const toConn = connectors.find(c => c.id === toId);
+                if (!fromConn || !toConn) return;
+
+                const x1 = 80 + fromConn.xPos * 12 + 160;
+                const x2 = 80 + toConn.xPos * 12;
+                const y = 180 + (idx % 10) * 42;
+
+                // Bezier curve - חיווט אמיתי
+                const path = `M ${x1} ${y} C ${x1 + 80} ${y}, ${x2 - 80} ${y + 30}, ${x2} ${y + 15}`;
+                svg += `<path d="${path}" stroke="${colors[idx % colors.length]}" stroke-width="9" stroke-opacity="0.9" fill="none"/>`;
+                svg += `<text x="${(x1 + x2)/2}" y="${y - 12}" text-anchor="middle" font-size="14" fill="#222">${label}</text>`;
             });
 
             svg += `</svg>`;
             document.getElementById('diagram').innerHTML = svg;
 
-            // BOM בסיסי
+            // BOM
             const bomBody = document.querySelector('#bomTable tbody');
             bomBody.innerHTML = '';
             document.querySelectorAll('#wiresTable tbody tr').forEach(row => {
@@ -302,8 +329,7 @@
                     <td>${qty}</td>
                     <td>${row.querySelector('.supplier').value}</td>
                     <td>${price}</td>
-                    <td>${(qty * price).toFixed(2)}</td>
-                `;
+                    <td>${(qty * price).toFixed(2)}</td>`;
                 bomBody.appendChild(tr);
             });
         }
@@ -311,28 +337,24 @@
         function exportCSV() {
             let csv = "\uFEFFמק\"ט,תיאור,מיקום,כמות,ספק,מחיר יח',סה\"כ\n";
             document.querySelectorAll('#bomTable tbody tr').forEach(row => {
-                csv += Array.from(row.cells).map(cell => `"${cell.textContent}"`).join(',') + '\n';
+                csv += Array.from(row.cells).map(c => `"${c.textContent}"`).join(',') + '\n';
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'BOM_Harness_v6.csv';
+            link.download = 'BOM_Harness_v7.csv';
             link.click();
         }
 
+        // שמירה / טעינה / ניקוי (כולל xPos)
         function saveProject(num) {
-            const data = {
-                connectors: connectors,
-                wiresHTML: document.querySelector('#wiresTable tbody').innerHTML,
-                sleevesHTML: document.querySelector('#sleevesTable tbody').innerHTML
-            };
+            const data = { connectors, wiresHTML: document.querySelector('#wiresTable tbody').innerHTML, sleevesHTML: document.querySelector('#sleevesTable tbody').innerHTML };
             localStorage.setItem(`harnessProject${num}`, JSON.stringify(data));
             alert(`פרויקט ${num} נשמר`);
         }
-
         function loadProject(num) {
             const saved = localStorage.getItem(`harnessProject${num}`);
-            if (!saved) return alert('אין פרויקט שמור');
+            if (!saved) return alert('אין פרויקט');
             const data = JSON.parse(saved);
             connectors = data.connectors || [];
             document.querySelector('#wiresTable tbody').innerHTML = data.wiresHTML || '';
@@ -340,9 +362,8 @@
             renderConnectors();
             alert(`פרויקט ${num} נטען`);
         }
-
         function clearAll() {
-            if (confirm('לנקות את כל הנתונים?')) {
+            if (confirm('לנקות הכל?')) {
                 initDefaultConnectors();
                 document.querySelector('#wiresTable tbody').innerHTML = '';
                 document.querySelector('#sleevesTable tbody').innerHTML = '';
@@ -353,12 +374,10 @@
             }
         }
 
-        // אתחול
         window.onload = () => {
             initDefaultConnectors();
             renderConnectors();
-
-            // שרוולים ראשוניים
+            // שרוולים
             const sleeveBody = document.querySelector('#sleevesTable tbody');
             [{dia: "8-12", name: "שרוול 10 מ\"מ", supplier: "ספק A"},
              {dia: "13-20", name: "שרוול 18 מ\"מ", supplier: "ספק B"}].forEach(s => {
@@ -366,7 +385,6 @@
                 r.innerHTML = `<td>${s.dia}</td><td>${s.name}</td><td>${s.supplier}</td>`;
                 sleeveBody.appendChild(r);
             });
-
             addWireRow();
         };
     </script>
