@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>HarnessPro v23</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<div id="app">
+
+<!-- ═══ TOP BAR ═══════════════════════════════════════════════ -->
+<div id="topbar">
+  <span class="logo">MOTI</span>
+  <span style="font-size:7px;color:var(--t3);letter-spacing:2px;margin-right:6px">HARNESS&nbsp;PRO</span>
+  <span class="tb-lbl">LENGTH</span>
+  <input id="tb-len" class="tb-field" type="number" value="500" style="width:55px">
+  <span class="tb-lbl">TOL±</span>
+  <input id="tb-tol" class="tb-field" type="number" value="20" style="width:38px">
+  <span class="tb-lbl">TITLE</span>
+  <input id="tb-title" class="tb-field" value="CABLE ASS'Y" style="width:110px">
+  <span class="tb-lbl">DWG#</span>
+  <input id="tb-dwg" class="tb-field" value="DWG-001" style="width:80px">
+  <span class="tb-lbl">P/N</span>
+  <input id="tb-pn" class="tb-field" value="PN-00001" style="width:90px">
+  <span class="tb-lbl">REV</span>
+  <input id="tb-rev" class="tb-field" value="A" style="width:28px">
+  <span style="flex:1"></span>
+  <button class="btn btn-err"  id="btn-new">NEW</button>
+  <button class="btn"          id="btn-import">↑ IMPORT</button>
+  <button class="btn btn-ok"   id="btn-export">↓ JSON</button>
+  <button class="btn btn-acc"  id="btn-excel">↓ EXCEL</button>
+  <button class="btn"          id="btn-save">⊟ SAVE</button>
+  <button class="btn btn-info" id="btn-wizard">⚡ WIZARD</button>
+</div>
+
+<!-- ═══ TAB BAR ════════════════════════════════════════════════ -->
+<div id="tabbar">
+  <button class="tab active" data-tab="canvas">CANVAS</button>
+  <button class="tab"        data-tab="drawing">DRAWING</button>
+  <button class="tab"        data-tab="routes">ROUTES</button>
+  <button class="tab"        data-tab="bom">BOM</button>
+  <button class="tab"        data-tab="cutlist">CUT LIST</button>
+  <button class="tab t-warn" data-tab="production">⊙ PRODUCTION</button>
+  <button class="tab t-teal" data-tab="connlib">⊕ CONN LIB</button>
+  <button class="tab t-vio"  data-tab="harness">◎ HARNESS</button>
+  <button class="tab t-ok"   data-tab="engdwg">▲ ENG DWG</button>
+  <button class="tab t-info" data-tab="analyze">⊞ ANALYZE</button>
+</div>
+
+<!-- ═══ WORKSPACE ══════════════════════════════════════════════ -->
+<div id="workspace">
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="sb-head" onclick="SB.toggle()">
+      <span>CONNECTORS</span><span id="sb-toggle">◀</span>
+    </div>
+    <div id="sb-search">
+      <input id="sb-filter" placeholder="Search..." oninput="SB.filter(this.value)">
+    </div>
+    <div class="sb-body" id="sb-body"></div>
+  </div>
+
+  <!-- Panels -->
+  <div id="panels">
+
+    <!-- CANVAS -->
+    <div class="panel active" id="panel-canvas">
+      <div id="canvas-col">
+        <div id="canvas-toolbar">
+          <button class="tool active" data-tool="select">▶ SELECT</button>
+          <button class="tool" data-tool="wire">— WIRE</button>
+          <button class="tool" data-tool="pan">⊕ PAN</button>
+          <div class="tool-sep"></div>
+          <button class="btn" onclick="CV.fit()">FIT</button>
+          <button class="btn" onclick="CV.zoom1()">1:1</button>
+          <button class="btn btn-ok" onclick="CV.routeAll()">⚡ ROUTE ALL</button>
+          <div class="tool-sep"></div>
+          <span style="font-size:7px;color:var(--t3)">Drag from sidebar · Right-click=delete · Scroll=zoom · Alt+drag=pan</span>
+          <span style="flex:1"></span>
+          <button class="btn btn-info" onclick="MapModal.open()">⊞ MAP VIEW</button>
+        </div>
+        <div id="canvas-wrap">
+          <canvas id="cv-main"></canvas>
+          <canvas id="cv-hover"></canvas>
+        </div>
+      </div>
+      <div id="props">
+        <div id="props-head">PROPERTIES</div>
+        <div id="props-body"><span style="color:var(--t3);font-size:7px">Select an element</span></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-drawing"><div class="panel-body" id="drawing-body"></div></div>
+    <div class="panel" id="panel-routes"><div class="panel-body" id="routes-body"></div></div>
+    <div class="panel" id="panel-bom"><div class="panel-body" id="bom-body"></div></div>
+    <div class="panel" id="panel-cutlist"><div class="panel-body" id="cutlist-body"></div></div>
+    <div class="panel" id="panel-production"><div class="panel-body" id="production-body"></div></div>
+    <div class="panel" id="panel-connlib" style="flex-direction:row">
+      <div class="cle-list" id="cle-list"></div>
+      <div class="cle-form" id="cle-form"><span style="color:var(--t3);font-size:8px">Select or create connector</span></div>
+    </div>
+    <div class="panel" id="panel-harness"><div id="hv-canvas" style="width:100%;height:100%"></div></div>
+    <div class="panel" id="panel-engdwg"><div class="panel-body" id="engdwg-body"></div></div>
+    <div class="panel" id="panel-analyze"></div>
+
+  </div><!-- /panels -->
+</div><!-- /workspace -->
+</div><!-- /app -->
+
+<!-- ═══ ANALYZE MODAL ══════════════════════════════════════════ -->
+<div id="az-modal">
+  <div id="az-bar">
+    <span class="logo" style="color:var(--c7)">⊞ ANALYZE</span>
+    <span id="az-status" style="font-size:7px;padding:2px 8px;border:1px solid var(--b2);color:var(--t3)">READY</span>
+    <span style="flex:1"></span>
+    <button class="btn btn-err" onclick="AzModal.close()">✕ CLOSE</button>
+  </div>
+  <div id="az-steps">▶ Upload drawing &nbsp;▶ ANALYZE &nbsp;▶ MAP VIEW or EXPORT
+    &nbsp;|&nbsp; <span style="color:var(--c3)">⚡ Run server.py for 90%+ accuracy (pdfminer)</span>
+  </div>
+  <div id="az-input-row">
+    <div class="az-pane">
+      <div class="label">① UPLOAD DRAWING (PNG / JPG / PDF)</div>
+      <div id="az-drop">
+        <div style="font-size:22px;color:var(--t3)">📄</div>
+        <div style="font-size:9px;color:var(--t2);margin-top:4px">CLICK OR DROP FILE</div>
+        <div style="font-size:7px;color:var(--t3);margin-top:2px">PDF → auto-extract + analyze</div>
+      </div>
+      <input type="file" id="az-file" accept=".png,.jpg,.jpeg,.pdf" style="display:none">
+      <div id="az-preview" style="margin-top:6px;text-align:center;max-height:100px;overflow:hidden"></div>
+    </div>
+    <div class="az-pane">
+      <div class="label">② OR PASTE EXTRACTED TEXT</div>
+      <textarea id="az-txt" placeholder="Paste drawing text here (or upload PDF above)…"></textarea>
+      <div style="display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-info" id="btn-analyze" onclick="Engine.run()">⚡ ANALYZE</button>
+        <button class="btn" onclick="Engine.clear()">CLEAR</button>
+        <button class="btn btn-info" onclick="MapModal.open()">⊞ MAP VIEW</button>
+        <span id="az-progress" style="font-size:7px;color:var(--t3)"></span>
+      </div>
+    </div>
+  </div>
+  <div id="az-results">
+    <div style="color:var(--t3);font-size:8px;text-align:center;padding:24px">Upload PDF or paste text → ANALYZE</div>
+  </div>
+</div>
+
+<!-- ═══ MAP VIEW MODAL ══════════════════════════════════════════ -->
+<div id="map-modal">
+  <div id="map-bar">
+    <span class="logo" style="color:var(--c7)">⊞ MAP VIEW</span>
+    <span id="map-file-lbl" style="font-size:7px;color:var(--t3)"></span>
+    <button class="btn" onclick="MapE.zoom(1.2)">+</button>
+    <button class="btn" onclick="MapE.zoom(0.83)">-</button>
+    <button class="btn" onclick="MapE.fit()">FIT</button>
+    <button class="btn btn-info" onclick="MapE.toggleBalloons()">◉ BALLOONS</button>
+    <button class="btn" onclick="MapE.gapReport()">△ GAPS</button>
+    <label class="btn btn-ok" style="cursor:pointer">↑ LOAD
+      <input type="file" accept=".pdf,.png,.jpg,.jpeg" style="display:none" onchange="MapE.loadFile(this.files[0]);this.value=''">
+    </label>
+    <span style="flex:1"></span>
+    <button class="btn btn-err" onclick="MapModal.close()">✕ CLOSE</button>
+  </div>
+  <div id="map-main">
+    <div id="map-canvas-wrap">
+      <canvas id="map-cv-bg"></canvas>
+      <canvas id="map-cv-ov"></canvas>
+    </div>
+    <div id="map-side">
+      <div style="padding:4px 8px;border-bottom:1px solid var(--b1);font-size:7px;color:var(--c7)">BOM ↔ DRAWING</div>
+      <div id="map-bom-list"></div>
+      <div id="map-gap"></div>
+      <div id="map-tooltip">Click a balloon or BOM row</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══════════════════════════════════════════════════ -->
+<div id="toast"></div>
+
+<!-- ═══ SCRIPTS (order matters) ════════════════════════════════ -->
+<!-- PDF.js local (no CDN, works file://) -->
+<script src="js/pdf.min.js"></script>
+<script src="js/pdf.worker.min.js" id="pdfjs-worker"></script>
+<!-- App modules -->
+<script src="js/store.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/connlib.js"></script>
+<script src="js/canvas.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/props.js"></script>
+<script src="js/production.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/connlib_editor.js"></script>
+<script src="js/mapview.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/excel.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
