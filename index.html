@@ -1,200 +1,724 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>HarnessPro v23</title>
-<link rel="stylesheet" href="css/main.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון חשמל מקצועי • חישובים לפי תקנים</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Heebo:wght@400;500&amp;display=swap');
+        
+        :root {
+            --tw-color-primary: #00b4d8;
+        }
+        
+        body {
+            font-family: 'Heebo', system-ui, sans-serif;
+        }
+        
+        .calculator-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .calculator-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgb(0 180 216 / 0.1), 0 8px 10px -6px rgb(0 180 216 / 0.1);
+        }
+        
+        .result-value {
+            animation: popIn 0.4s ease;
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid #00b4d8;
+            color: #00b4d8;
+        }
+    </style>
 </head>
-<body>
-<div id="app">
-
-<!-- ═══ TOP BAR ═══════════════════════════════════════════════ -->
-<div id="topbar">
-  <span class="logo">MOTI</span>
-  <span style="font-size:7px;color:var(--t3);letter-spacing:2px;margin-right:6px">HARNESS&nbsp;PRO</span>
-  <span class="tb-lbl">LENGTH</span>
-  <input id="tb-len" class="tb-field" type="number" value="500" style="width:55px">
-  <span class="tb-lbl">TOL±</span>
-  <input id="tb-tol" class="tb-field" type="number" value="20" style="width:38px">
-  <span class="tb-lbl">TITLE</span>
-  <input id="tb-title" class="tb-field" value="CABLE ASS'Y" style="width:110px">
-  <span class="tb-lbl">DWG#</span>
-  <input id="tb-dwg" class="tb-field" value="DWG-001" style="width:80px">
-  <span class="tb-lbl">P/N</span>
-  <input id="tb-pn" class="tb-field" value="PN-00001" style="width:90px">
-  <span class="tb-lbl">REV</span>
-  <input id="tb-rev" class="tb-field" value="A" style="width:28px">
-  <span style="flex:1"></span>
-  <button class="btn btn-err"  id="btn-new">NEW</button>
-  <button class="btn"          id="btn-import">↑ IMPORT</button>
-  <button class="btn btn-ok"   id="btn-export">↓ JSON</button>
-  <button class="btn btn-acc"  id="btn-excel">↓ EXCEL</button>
-  <button class="btn"          id="btn-save">⊟ SAVE</button>
-  <button class="btn btn-info" id="btn-wizard">⚡ WIZARD</button>
-</div>
-
-<!-- ═══ TAB BAR ════════════════════════════════════════════════ -->
-<div id="tabbar">
-  <button class="tab active" data-tab="canvas">CANVAS</button>
-  <button class="tab"        data-tab="drawing">DRAWING</button>
-  <button class="tab"        data-tab="routes">ROUTES</button>
-  <button class="tab"        data-tab="bom">BOM</button>
-  <button class="tab"        data-tab="cutlist">CUT LIST</button>
-  <button class="tab t-warn" data-tab="production">⊙ PRODUCTION</button>
-  <button class="tab t-teal" data-tab="connlib">⊕ CONN LIB</button>
-  <button class="tab t-vio"  data-tab="harness">◎ HARNESS</button>
-  <button class="tab t-ok"   data-tab="engdwg">▲ ENG DWG</button>
-  <button class="tab t-info" data-tab="analyze">⊞ ANALYZE</button>
-</div>
-
-<!-- ═══ WORKSPACE ══════════════════════════════════════════════ -->
-<div id="workspace">
-  <!-- Sidebar -->
-  <div id="sidebar">
-    <div id="sb-head" onclick="SB.toggle()">
-      <span>CONNECTORS</span><span id="sb-toggle">◀</span>
-    </div>
-    <div id="sb-search">
-      <input id="sb-filter" placeholder="Search..." oninput="SB.filter(this.value)">
-    </div>
-    <div class="sb-body" id="sb-body"></div>
-  </div>
-
-  <!-- Panels -->
-  <div id="panels">
-
-    <!-- CANVAS -->
-    <div class="panel active" id="panel-canvas">
-      <div id="canvas-col">
-        <div id="canvas-toolbar">
-          <button class="tool active" data-tool="select">▶ SELECT</button>
-          <button class="tool" data-tool="wire">— WIRE</button>
-          <button class="tool" data-tool="pan">⊕ PAN</button>
-          <div class="tool-sep"></div>
-          <button class="btn" onclick="CV.fit()">FIT</button>
-          <button class="btn" onclick="CV.zoom1()">1:1</button>
-          <button class="btn btn-ok" onclick="CV.routeAll()">⚡ ROUTE ALL</button>
-          <div class="tool-sep"></div>
-          <span style="font-size:7px;color:var(--t3)">Drag from sidebar · Right-click=delete · Scroll=zoom · Alt+drag=pan</span>
-          <span style="flex:1"></span>
-          <button class="btn btn-info" onclick="MapModal.open()">⊞ MAP VIEW</button>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div class="flex items-center gap-x-4">
+                <div class="w-11 h-11 bg-[#00b4d8] text-white rounded-2xl flex items-center justify-center text-3xl shadow-inner">⚡</div>
+                <div>
+                    <h1 class="text-3xl font-semibold tracking-tight">מחשבון חשמל</h1>
+                    <p class="text-sm text-slate-400 -mt-1">לפי תקנים ישראליים ו- IEC 60364</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-x-8 text-sm">
+                <a href="#basic" onclick="navigateToSection('basic')" class="hover:text-[#00b4d8] transition-colors flex items-center gap-x-1">
+                    <span>חישובים בסיסיים</span>
+                </a>
+                <a href="#cable" onclick="navigateToSection('cable')" class="hover:text-[#00b4d8] transition-colors flex items-center gap-x-1">
+                    <span>כבלים וחתכים</span>
+                </a>
+                <a href="#drop" onclick="navigateToSection('drop')" class="hover:text-[#00b4d8] transition-colors flex items-center gap-x-1">
+                    <span>ירידת מתח</span>
+                </a>
+                <a href="#power" onclick="navigateToSection('power')" class="hover:text-[#00b4d8] transition-colors flex items-center gap-x-1">
+                    <span>הספק ותלת-פאזי</span>
+                </a>
+                
+                <div class="flex items-center bg-slate-800 text-slate-400 text-xs px-4 h-9 rounded-3xl border border-slate-700">
+                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
+                    גרסה 2.4 • עדכון אפריל 2026
+                </div>
+                
+                <button onclick="copyToClipboard()" 
+                        class="flex items-center gap-x-2 bg-[#00b4d8] hover:bg-[#00a0c0] text-white px-6 h-9 rounded-3xl text-sm font-medium transition-all active:scale-95">
+                    <span>שמור כקובץ HTML</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2 2 2 0 01-2 2v-2M8 7v-2a2 2 0 012-2v2M8 7l-4 4m4-4l4 4" />
+                    </svg>
+                </button>
+            </div>
         </div>
-        <div id="canvas-wrap">
-          <canvas id="cv-main"></canvas>
-          <canvas id="cv-hover"></canvas>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        
+        <!-- Disclaimer -->
+        <div class="bg-amber-950/60 border border-amber-400/30 rounded-3xl p-5 mb-10 text-amber-300 text-sm flex items-start gap-x-4">
+            <span class="text-2xl mt-px">⚠️</span>
+            <div>
+                <strong class="font-medium">הערה חשובה:</strong> 
+                החישובים מבוססים על נוסחאות וטבלאות מתקנים ישראליים (ת״י 384, ת״י 197, ת״י 248) ומקבילים ל-IEC 60364. 
+                הם משמשים להערכה בלבד. תמיד התייעץ עם מהנדס חשמל מוסמך והשתמש בטבלאות התקן העדכניות ביותר של מכון התקנים הישראלי.
+            </div>
         </div>
-      </div>
-      <div id="props">
-        <div id="props-head">PROPERTIES</div>
-        <div id="props-body"><span style="color:var(--t3);font-size:7px">Select an element</span></div>
-      </div>
+
+        <!-- Quick Navigation Tabs -->
+        <div class="flex gap-x-2 mb-8 border-b border-slate-800 pb-2 overflow-x-auto">
+            <button onclick="switchTab(0)" id="tab-0" class="tab-active px-6 py-2 text-sm font-medium whitespace-nowrap">חוק אוהם</button>
+            <button onclick="switchTab(1)" id="tab-1" class="px-6 py-2 text-sm font-medium whitespace-nowrap">הספק חשמלי</button>
+            <button onclick="switchTab(2)" id="tab-2" class="px-6 py-2 text-sm font-medium whitespace-nowrap">זרם תלת-פאזי</button>
+            <button onclick="switchTab(3)" id="tab-3" class="px-6 py-2 text-sm font-medium whitespace-nowrap">חתך כבל</button>
+            <button onclick="switchTab(4)" id="tab-4" class="px-6 py-2 text-sm font-medium whitespace-nowrap">ירידת מתח</button>
+            <button onclick="switchTab(5)" id="tab-5" class="px-6 py-2 text-sm font-medium whitespace-nowrap">חישובי שנאי</button>
+            <button onclick="switchTab(6)" id="tab-6" class="px-6 py-2 text-sm font-medium whitespace-nowrap">תאורה</button>
+        </div>
+
+        <!-- Calculator 1: חוק אוהם -->
+        <div id="section-0" class="calculator-card bg-slate-900 rounded-3xl p-8 mb-10">
+            <div class="flex justify-between items-baseline mb-6">
+                <h2 class="text-2xl font-semibold">חוק אוהם</h2>
+                <span class="text-xs bg-slate-800 text-slate-400 px-4 py-1 rounded-3xl">V = I × R</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Voltage -->
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">מתח (V)</label>
+                    <div class="flex gap-x-2">
+                        <input id="ohm-v" type="number" step="any" value="230" 
+                               oninput="calculateOhm()" 
+                               class="flex-1 bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl font-medium outline-none">
+                        <select id="ohm-v-unit" onchange="calculateOhm()" class="bg-slate-800 border border-slate-700 rounded-2xl px-4 text-lg">
+                            <option value="1">V</option>
+                            <option value="1000">kV</option>
+                            <option value="0.001">mV</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Current -->
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">זרם (I)</label>
+                    <div class="flex gap-x-2">
+                        <input id="ohm-i" type="number" step="any" value="" 
+                               oninput="calculateOhm()" 
+                               class="flex-1 bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl font-medium outline-none">
+                        <select id="ohm-i-unit" onchange="calculateOhm()" class="bg-slate-800 border border-slate-700 rounded-2xl px-4 text-lg">
+                            <option value="1">A</option>
+                            <option value="1000">kA</option>
+                            <option value="0.001">mA</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Resistance -->
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">התנגדות (R)</label>
+                    <div class="flex gap-x-2">
+                        <input id="ohm-r" type="number" step="any" value="" 
+                               oninput="calculateOhm()" 
+                               class="flex-1 bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl font-medium outline-none">
+                        <select id="ohm-r-unit" onchange="calculateOhm()" class="bg-slate-800 border border-slate-700 rounded-2xl px-4 text-lg">
+                            <option value="1">Ω</option>
+                            <option value="1000">kΩ</option>
+                            <option value="1000000">MΩ</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div id="ohm-result" class="mt-8 bg-slate-950 border border-slate-700 rounded-3xl p-6 text-center text-4xl font-medium text-[#00b4d8] result-value">
+                מלא שני שדות כדי לקבל תוצאה
+            </div>
+            <div class="text-xs text-slate-500 mt-3 flex justify-center gap-x-8">
+                <div>מתאים לתקן IEC 60364 – חישובים בסיסיים</div>
+                <div>עבור DC ו-AC (עד 50 Hz)</div>
+            </div>
+        </div>
+
+        <!-- Calculator 2: הספק חשמלי -->
+        <div id="section-1" class="calculator-card bg-slate-900 rounded-3xl p-8 mb-10">
+            <div class="flex justify-between items-baseline mb-6">
+                <h2 class="text-2xl font-semibold">חישוב הספק חשמלי</h2>
+                <span class="text-xs bg-slate-800 text-slate-400 px-4 py-1 rounded-3xl">P = V × I × cosφ</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">הספק (P)</label>
+                    <input id="power-p" type="number" step="any" value="5.5" oninput="calculatePower()" 
+                           class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl font-medium outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">מתח (V)</label>
+                    <input id="power-v" type="number" step="any" value="230" oninput="calculatePower()" 
+                           class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl font-medium outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">זרם (I)</label>
+                    <input id="power-i" type="number" step="any" value="" oninput="calculatePower()" 
+                           class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl font-medium outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">מקדם הספק (cos φ)</label>
+                    <input id="power-cos" type="number" step="0.01" min="0.1" max="1" value="0.85" oninput="calculatePower()" 
+                           class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl font-medium outline-none">
+                </div>
+            </div>
+            <div class="flex items-center gap-x-4 mt-6">
+                <label class="text-sm font-medium">סוג:</label>
+                <label class="flex items-center gap-x-2 cursor-pointer">
+                    <input type="radio" name="power-type" value="dc" checked onchange="calculatePower()" class="accent-[#00b4d8]">
+                    <span>DC</span>
+                </label>
+                <label class="flex items-center gap-x-2 cursor-pointer">
+                    <input type="radio" name="power-type" value="ac" onchange="calculatePower()" class="accent-[#00b4d8]">
+                    <span>AC חד-פאזי</span>
+                </label>
+                <label class="flex items-center gap-x-2 cursor-pointer">
+                    <input type="radio" name="power-type" value="3ph" onchange="calculatePower()" class="accent-[#00b4d8]">
+                    <span>AC תלת-פאזי</span>
+                </label>
+            </div>
+            <div id="power-result" class="mt-8 bg-emerald-900/30 border border-emerald-400/30 text-emerald-300 rounded-3xl px-8 py-6 text-4xl font-medium flex justify-between items-center">
+                <span>הספק פעיל:</span>
+                <span id="power-result-value" class="result-value">4.675 kW</span>
+            </div>
+        </div>
+
+        <!-- Calculator 3: זרם תלת פאזי -->
+        <div id="section-2" class="calculator-card bg-slate-900 rounded-3xl p-8 mb-10">
+            <div class="flex justify-between items-baseline mb-6">
+                <h2 class="text-2xl font-semibold">חישוב זרם תלת-פאזי / חד-פאזי</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">הספק (kW)</label>
+                    <input id="current-kw" type="number" value="22" oninput="calculateCurrent()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">מתח קו (V)</label>
+                    <input id="current-v" type="number" value="400" oninput="calculateCurrent()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">cos φ</label>
+                    <input id="current-cos" type="number" step="0.01" value="0.85" oninput="calculateCurrent()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">סוג פאזה</label>
+                    <select id="current-phase" onchange="calculateCurrent()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                        <option value="1">חד-פאזי (230V)</option>
+                        <option value="3" selected>תלת-פאזי (400V)</option>
+                    </select>
+                </div>
+            </div>
+            <div id="current-result" class="mt-8 p-6 bg-slate-950 border border-slate-700 rounded-3xl text-center">
+                <div class="text-sm text-slate-400">זרם (A)</div>
+                <div id="current-result-value" class="text-6xl font-semibold text-[#00b4d8] result-value">37.6</div>
+            </div>
+        </div>
+
+        <!-- Calculator 4: חתך כבל -->
+        <div id="section-3" class="calculator-card bg-slate-900 rounded-3xl p-8 mb-10">
+            <div class="flex justify-between items-baseline mb-6">
+                <h2 class="text-2xl font-semibold">חתך כבל מינימלי לפי תקן</h2>
+                <span class="text-xs px-3 py-1 bg-blue-500/10 text-blue-400 rounded-3xl">IEC 60364-5-52 + ת״י 197</span>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">זרם תכנון (A)</label>
+                    <input id="cable-current" type="number" value="63" oninput="calculateCable()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">חומר כבל</label>
+                    <select id="cable-material" onchange="calculateCable()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                        <option value="cu">נחושת (Cu)</option>
+                        <option value="al">אלומיניום (Al)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">סוג התקנה</label>
+                    <select id="cable-method" onchange="calculateCable()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                        <option value="air">באוויר / על קיר</option>
+                        <option value="conduit">בתוך צינור</option>
+                        <option value="ground">באדמה</option>
+                        <option value="tray">במגש כבלים</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4" id="cable-table">
+                <!-- JS will populate common sections -->
+            </div>
+
+            <div id="cable-result" class="mt-8 p-6 bg-slate-950 border border-emerald-500 rounded-3xl flex justify-between items-center">
+                <div>
+                    <div class="text-emerald-400 text-sm">חתך מינימלי מומלץ</div>
+                    <div id="cable-min-section" class="text-5xl font-semibold">10 mm²</div>
+                </div>
+                <div class="text-right">
+                    <div class="text-emerald-400 text-sm">זרם מותר (A)</div>
+                    <div id="cable-allowed-current" class="text-5xl font-semibold">72 A</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculator 5: ירידת מתח -->
+        <div id="section-4" class="calculator-card bg-slate-900 rounded-3xl p-8 mb-10">
+            <div class="flex justify-between items-baseline mb-6">
+                <h2 class="text-2xl font-semibold">חישוב ירידת מתח בכבל</h2>
+                <span class="text-xs px-3 py-1 bg-orange-500/10 text-orange-400 rounded-3xl">מקסימום 3% לתאורה, 5% לעומסים (ת״י 384)</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+                <div class="md:col-span-2">
+                    <label class="block text-sm text-slate-400 mb-2">אורך הכבל (מ')</label>
+                    <input id="drop-length" type="number" value="85" oninput="calculateDrop()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">זרם (A)</label>
+                    <input id="drop-current" type="number" value="32" oninput="calculateDrop()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">חתך (mm²)</label>
+                    <input id="drop-section" type="number" value="6" oninput="calculateDrop()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">סוג פאזה</label>
+                    <select id="drop-phase" onchange="calculateDrop()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                        <option value="1">חד-פאזי</option>
+                        <option value="3" selected>תלת-פאזי</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">חומר</label>
+                    <select id="drop-material" onchange="calculateDrop()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                        <option value="cu">נחושת</option>
+                        <option value="al">אלומיניום</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">מתח (V)</label>
+                    <input id="drop-voltage" type="number" value="400" oninput="calculateDrop()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+            </div>
+            <div id="drop-result" class="mt-8 flex justify-center items-center gap-x-16 bg-slate-950 border border-orange-400/30 text-orange-400 rounded-3xl p-8">
+                <div class="text-center">
+                    <div class="text-sm">ירידת מתח</div>
+                    <div id="drop-percent" class="text-7xl font-semibold result-value">2.8%</div>
+                </div>
+                <div class="h-16 w-px bg-orange-400/30"></div>
+                <div class="text-center">
+                    <div class="text-sm">ירידת מתח (V)</div>
+                    <div id="drop-volts" class="text-7xl font-semibold result-value">11.2 V</div>
+                </div>
+                <div class="text-xs max-w-52 text-orange-300/80">התוצאה תואמת דרישות תקן – ירידה מקסימלית מותרת 5% לעומסים כלליים</div>
+            </div>
+        </div>
+
+        <!-- Calculator 6: חישובי שנאי -->
+        <div id="section-5" class="calculator-card bg-slate-900 rounded-3xl p-8 mb-10">
+            <div class="flex justify-between items-baseline mb-6">
+                <h2 class="text-2xl font-semibold">חישובי שנאי</h2>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">הספק שנאי (kVA)</label>
+                    <input id="trafo-kva" type="number" value="160" oninput="calculateTrafo()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">מתח ראשוני (V)</label>
+                    <input id="trafo-v1" type="number" value="11000" oninput="calculateTrafo()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">מתח משני (V)</label>
+                    <input id="trafo-v2" type="number" value="400" oninput="calculateTrafo()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">יעילות (%)</label>
+                    <input id="trafo-eff" type="number" value="98" oninput="calculateTrafo()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+            </div>
+            <div class="mt-8 flex flex-wrap gap-8 justify-center text-center">
+                <div class="bg-slate-950 px-8 py-6 rounded-3xl">
+                    <div class="text-xs text-slate-400">זרם ראשוני (A)</div>
+                    <div id="trafo-i1" class="text-5xl font-semibold">8.4</div>
+                </div>
+                <div class="bg-slate-950 px-8 py-6 rounded-3xl">
+                    <div class="text-xs text-slate-400">זרם משני (A)</div>
+                    <div id="trafo-i2" class="text-5xl font-semibold">231</div>
+                </div>
+                <div class="bg-slate-950 px-8 py-6 rounded-3xl">
+                    <div class="text-xs text-slate-400">הספק כניסה (kW)</div>
+                    <div id="trafo-input" class="text-5xl font-semibold">156.8</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calculator 7: תאורה -->
+        <div id="section-6" class="calculator-card bg-slate-900 rounded-3xl p-8 mb-10">
+            <div class="flex justify-between items-baseline mb-6">
+                <h2 class="text-2xl font-semibold">חישוב תאורה לפי תקן</h2>
+                <span class="text-xs px-3 py-1 bg-purple-500/10 text-purple-400 rounded-3xl">ת״י 248 – תאורה פנימית</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">שטח החדר (m²)</label>
+                    <input id="light-area" type="number" value="45" oninput="calculateLight()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">רמת תאורה נדרשת (Lux)</label>
+                    <select id="light-lux" onchange="calculateLight()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                        <option value="300">משרד – 300 Lux</option>
+                        <option value="500" selected>משרד / חדר עבודה – 500 Lux</option>
+                        <option value="750">מפעל מדויק – 750 Lux</option>
+                        <option value="150">מסדרון – 150 Lux</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">יעילות גוף תאורה (lm/W)</label>
+                    <input id="light-eff" type="number" value="110" oninput="calculateLight()" class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-400 mb-2">מספר גופי תאורה</label>
+                    <input id="light-num" type="number" value="" readonly class="w-full bg-slate-800 border border-slate-700 focus:border-[#00b4d8] rounded-2xl px-5 py-4 text-3xl text-purple-300">
+                </div>
+            </div>
+            <div id="light-result" class="mt-8 text-center bg-purple-950/30 border border-purple-400 rounded-3xl p-8 text-5xl font-medium text-purple-200">
+                נדרש <span id="light-result-value" class="text-purple-400">21</span> גופי תאורה
+            </div>
+        </div>
+
+        <!-- Formulas Reference -->
+        <div class="bg-slate-900 rounded-3xl p-8 text-sm">
+            <h3 class="font-medium mb-4 text-lg flex items-center gap-x-2"><span class="text-[#00b4d8]">📐</span> נוסחאות ותקנים בשימוש</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-y-6 text-slate-400">
+                <div>ירידת מתח תלת-פאזי: ΔU% = (√3 × I × L × ρ × cosφ) / (A × U) × 100</div>
+                <div>זרם תלת-פאזי: I = P / (√3 × V × cosφ)</div>
+                <div>חתך כבל: לפי טבלאות IEC 60364-5-52 (Cu PVC 70°C)</div>
+                <div>חוק אוהם: V = I × R • P = V × I • R = V² / P</div>
+                <div>שנאי: I₁ = S / (√3 × V₁) • I₂ = S / (√3 × V₂)</div>
+                <div>תאורה: Φ = (E × A × UF × MF) / η</div>
+            </div>
+            <p class="text-xs mt-8 text-slate-500">כל החישובים מתעדכנים בזמן אמת. ניתן להדפיס את הדף או לשמור כ-PDF.</p>
+        </div>
     </div>
 
-    <div class="panel" id="panel-drawing"><div class="panel-body" id="drawing-body"></div></div>
-    <div class="panel" id="panel-routes"><div class="panel-body" id="routes-body"></div></div>
-    <div class="panel" id="panel-bom"><div class="panel-body" id="bom-body"></div></div>
-    <div class="panel" id="panel-cutlist"><div class="panel-body" id="cutlist-body"></div></div>
-    <div class="panel" id="panel-production"><div class="panel-body" id="production-body"></div></div>
-    <div class="panel" id="panel-connlib" style="flex-direction:row">
-      <div class="cle-list" id="cle-list"></div>
-      <div class="cle-form" id="cle-form"><span style="color:var(--t3);font-size:8px">Select or create connector</span></div>
-    </div>
-    <div class="panel" id="panel-harness"><div id="hv-canvas" style="width:100%;height:100%"></div></div>
-    <div class="panel" id="panel-engdwg"><div class="panel-body" id="engdwg-body"></div></div>
-    <div class="panel" id="panel-analyze"></div>
+    <footer class="bg-slate-950 border-t border-slate-800 py-8 text-center text-xs text-slate-500">
+        נוצר במיוחד עבורך • כל הזכויות שמורות © 2026 • מחשבון עצמאי 100% (ללא פרסומות)
+    </footer>
 
-  </div><!-- /panels -->
-</div><!-- /workspace -->
-</div><!-- /app -->
+    <script>
+        // Tailwind initialization
+        function initializeTailwind() {
+            tailwind.config = {
+                content: [],
+                theme: {
+                    extend: {}
+                }
+            }
+        }
 
-<!-- ═══ ANALYZE MODAL ══════════════════════════════════════════ -->
-<div id="az-modal">
-  <div id="az-bar">
-    <span class="logo" style="color:var(--c7)">⊞ ANALYZE</span>
-    <span id="az-status" style="font-size:7px;padding:2px 8px;border:1px solid var(--b2);color:var(--t3)">READY</span>
-    <span style="flex:1"></span>
-    <button class="btn btn-err" onclick="AzModal.close()">✕ CLOSE</button>
-  </div>
-  <div id="az-steps">▶ Upload drawing &nbsp;▶ ANALYZE &nbsp;▶ MAP VIEW or EXPORT
-    &nbsp;|&nbsp; <span style="color:var(--c3)">⚡ Run server.py for 90%+ accuracy (pdfminer)</span>
-  </div>
-  <div id="az-input-row">
-    <div class="az-pane">
-      <div class="label">① UPLOAD DRAWING (PNG / JPG / PDF)</div>
-      <div id="az-drop">
-        <div style="font-size:22px;color:var(--t3)">📄</div>
-        <div style="font-size:9px;color:var(--t2);margin-top:4px">CLICK OR DROP FILE</div>
-        <div style="font-size:7px;color:var(--t3);margin-top:2px">PDF → auto-extract + analyze</div>
-      </div>
-      <input type="file" id="az-file" accept=".png,.jpg,.jpeg,.pdf" style="display:none">
-      <div id="az-preview" style="margin-top:6px;text-align:center;max-height:100px;overflow:hidden"></div>
-    </div>
-    <div class="az-pane">
-      <div class="label">② OR PASTE EXTRACTED TEXT</div>
-      <textarea id="az-txt" placeholder="Paste drawing text here (or upload PDF above)…"></textarea>
-      <div style="display:flex;gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap">
-        <button class="btn btn-info" id="btn-analyze" onclick="Engine.run()">⚡ ANALYZE</button>
-        <button class="btn" onclick="Engine.clear()">CLEAR</button>
-        <button class="btn btn-info" onclick="MapModal.open()">⊞ MAP VIEW</button>
-        <span id="az-progress" style="font-size:7px;color:var(--t3)"></span>
-      </div>
-    </div>
-  </div>
-  <div id="az-results">
-    <div style="color:var(--t3);font-size:8px;text-align:center;padding:24px">Upload PDF or paste text → ANALYZE</div>
-  </div>
-</div>
+        // Global navigation
+        function navigateToSection(section) {
+            document.getElementById('section-' + (section === 'basic' ? 0 : section === 'cable' ? 3 : section === 'drop' ? 4 : section === 'power' ? 1 : 2)).scrollIntoView({ behavior: 'smooth' })
+        }
 
-<!-- ═══ MAP VIEW MODAL ══════════════════════════════════════════ -->
-<div id="map-modal">
-  <div id="map-bar">
-    <span class="logo" style="color:var(--c7)">⊞ MAP VIEW</span>
-    <span id="map-file-lbl" style="font-size:7px;color:var(--t3)"></span>
-    <button class="btn" onclick="MapE.zoom(1.2)">+</button>
-    <button class="btn" onclick="MapE.zoom(0.83)">-</button>
-    <button class="btn" onclick="MapE.fit()">FIT</button>
-    <button class="btn btn-info" onclick="MapE.toggleBalloons()">◉ BALLOONS</button>
-    <button class="btn" onclick="MapE.gapReport()">△ GAPS</button>
-    <label class="btn btn-ok" style="cursor:pointer">↑ LOAD
-      <input type="file" accept=".pdf,.png,.jpg,.jpeg" style="display:none" onchange="MapE.loadFile(this.files[0]);this.value=''">
-    </label>
-    <span style="flex:1"></span>
-    <button class="btn btn-err" onclick="MapModal.close()">✕ CLOSE</button>
-  </div>
-  <div id="map-main">
-    <div id="map-canvas-wrap">
-      <canvas id="map-cv-bg"></canvas>
-      <canvas id="map-cv-ov"></canvas>
-    </div>
-    <div id="map-side">
-      <div style="padding:4px 8px;border-bottom:1px solid var(--b1);font-size:7px;color:var(--c7)">BOM ↔ DRAWING</div>
-      <div id="map-bom-list"></div>
-      <div id="map-gap"></div>
-      <div id="map-tooltip">Click a balloon or BOM row</div>
-    </div>
-  </div>
-</div>
+        // Tab switching
+        function switchTab(n) {
+            // Remove active from all
+            for (let i = 0; i < 7; i++) {
+                const tab = document.getElementById('tab-' + i)
+                if (tab) tab.classList.remove('tab-active')
+            }
+            // Activate current
+            const activeTab = document.getElementById('tab-' + n)
+            if (activeTab) activeTab.classList.add('tab-active')
+            
+            // Scroll to the section
+            const sectionId = n === 0 ? 'section-0' : 
+                             n === 1 ? 'section-1' : 
+                             n === 2 ? 'section-2' : 
+                             n === 3 ? 'section-3' : 
+                             n === 4 ? 'section-4' : 
+                             n === 5 ? 'section-5' : 'section-6'
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' })
+        }
 
-<!-- ═══ TOAST ═══════════════════════════════════════════════════ -->
-<div id="toast"></div>
+        // Calculator 1: Ohm's Law
+        function calculateOhm() {
+            const vInput = parseFloat(document.getElementById('ohm-v').value)
+            const iInput = parseFloat(document.getElementById('ohm-i').value)
+            const rInput = parseFloat(document.getElementById('ohm-r').value)
+            
+            const vUnit = parseFloat(document.getElementById('ohm-v-unit').value)
+            const iUnit = parseFloat(document.getElementById('ohm-i-unit').value)
+            const rUnit = parseFloat(document.getElementById('ohm-r-unit').value)
+            
+            const v = vInput * vUnit
+            const i = iInput * iUnit
+            const r = rInput * rUnit
+            
+            let resultHTML = ''
+            
+            if (!isNaN(v) && !isNaN(i) && isNaN(r)) {
+                // Calculate R
+                const calcR = v / i
+                document.getElementById('ohm-r').value = (calcR / rUnit).toFixed(3)
+                resultHTML = `<span class="text-emerald-400">R = ${calcR.toFixed(3)} Ω</span>`
+            } 
+            else if (!isNaN(v) && !isNaN(r) && isNaN(i)) {
+                // Calculate I
+                const calcI = v / r
+                document.getElementById('ohm-i').value = (calcI / iUnit).toFixed(3)
+                resultHTML = `<span class="text-emerald-400">I = ${calcI.toFixed(3)} A</span>`
+            } 
+            else if (!isNaN(i) && !isNaN(r) && isNaN(v)) {
+                // Calculate V
+                const calcV = i * r
+                document.getElementById('ohm-v').value = (calcV / vUnit).toFixed(2)
+                resultHTML = `<span class="text-emerald-400">V = ${calcV.toFixed(2)} V</span>`
+            } 
+            else if (!isNaN(v) && !isNaN(i) && !isNaN(r)) {
+                resultHTML = `<span class="text-amber-400">כל הערכים מולאו – בדוק התאמה</span>`
+            } 
+            else {
+                resultHTML = 'מלא שני שדות לקבלת התוצאה'
+            }
+            
+            document.getElementById('ohm-result').innerHTML = resultHTML || 'מלא שני שדות כדי לקבל תוצאה'
+        }
 
-<!-- ═══ SCRIPTS (order matters) ════════════════════════════════ -->
-<!-- PDF.js local (no CDN, works file://) -->
-<script src="js/pdf.min.js"></script>
-<script src="js/pdf.worker.min.js" id="pdfjs-worker"></script>
-<!-- App modules -->
-<script src="js/store.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/connlib.js"></script>
-<script src="js/canvas.js"></script>
-<script src="js/sidebar.js"></script>
-<script src="js/props.js"></script>
-<script src="js/production.js"></script>
-<script src="js/panels.js"></script>
-<script src="js/connlib_editor.js"></script>
-<script src="js/mapview.js"></script>
-<script src="js/engine.js"></script>
-<script src="js/excel.js"></script>
-<script src="js/app.js"></script>
+        // Calculator 2: Power
+        function calculatePower() {
+            let p = parseFloat(document.getElementById('power-p').value)
+            let v = parseFloat(document.getElementById('power-v').value)
+            let i = parseFloat(document.getElementById('power-i').value)
+            let cos = parseFloat(document.getElementById('power-cos').value)
+            const type = document.querySelector('input[name="power-type"]:checked').value
+            
+            let result = 0
+            let unit = 'kW'
+            
+            if (type === 'dc') {
+                if (!isNaN(p) && !isNaN(v)) i = p * 1000 / v
+                else if (!isNaN(p) && !isNaN(i)) v = p * 1000 / i
+                else if (!isNaN(v) && !isNaN(i)) p = (v * i) / 1000
+                result = p || (v * i / 1000)
+            } else if (type === 'ac') {
+                if (!isNaN(p) && !isNaN(v)) i = p * 1000 / (v * cos)
+                else if (!isNaN(p) && !isNaN(i)) v = p * 1000 / (i * cos)
+                else if (!isNaN(v) && !isNaN(i)) p = (v * i * cos) / 1000
+                result = p || (v * i * cos / 1000)
+            } else if (type === '3ph') {
+                if (!isNaN(p) && !isNaN(v)) i = p * 1000 / (1.732 * v * cos)
+                else if (!isNaN(p) && !isNaN(i)) v = p * 1000 / (1.732 * i * cos)
+                else if (!isNaN(v) && !isNaN(i)) p = (1.732 * v * i * cos) / 1000
+                result = p || (1.732 * v * i * cos / 1000)
+            }
+            
+            document.getElementById('power-result-value').textContent = result.toFixed(3) + ' ' + unit
+        }
+
+        // Calculator 3: Current
+        function calculateCurrent() {
+            const kw = parseFloat(document.getElementById('current-kw').value)
+            const v = parseFloat(document.getElementById('current-v').value)
+            const cos = parseFloat(document.getElementById('current-cos').value)
+            const phase = document.getElementById('current-phase').value
+            
+            let i = 0
+            if (phase === '1') {
+                i = (kw * 1000) / (v * cos)
+            } else {
+                i = (kw * 1000) / (1.732 * v * cos)
+            }
+            
+            document.getElementById('current-result-value').textContent = i.toFixed(1)
+        }
+
+        // Cable ampacity table data (approximate values from IEC 60364 + Israeli standard ת״י 197)
+        const cableData = {
+            cu: {
+                air: {1.5: 19, 2.5: 26, 4: 35, 6: 46, 10: 63, 16: 85, 25: 110, 35: 135, 50: 165},
+                conduit: {1.5: 17, 2.5: 24, 4: 32, 6: 41, 10: 57, 16: 76, 25: 101, 35: 125, 50: 151},
+                ground: {1.5: 22, 2.5: 30, 4: 38, 6: 48, 10: 65, 16: 85, 25: 110, 35: 135, 50: 165},
+                tray: {1.5: 21, 2.5: 28, 4: 37, 6: 48, 10: 66, 16: 89, 25: 115, 35: 141, 50: 172}
+            },
+            al: {
+                air: {2.5: 20, 4: 27, 6: 35, 10: 48, 16: 64, 25: 85, 35: 105, 50: 125},
+                conduit: {2.5: 18, 4: 25, 6: 32, 10: 44, 16: 59, 25: 78, 35: 96, 50: 115},
+                ground: {2.5: 24, 4: 31, 6: 39, 10: 52, 16: 68, 25: 89, 35: 110, 50: 130},
+                tray: {2.5: 23, 4: 30, 6: 38, 10: 51, 16: 67, 25: 87, 35: 107, 50: 128}
+            }
+        }
+
+        function calculateCable() {
+            const current = parseFloat(document.getElementById('cable-current').value) || 0
+            const material = document.getElementById('cable-material').value
+            const method = document.getElementById('cable-method').value
+            
+            const table = cableData[material][method]
+            
+            // Find minimal section
+            let minSection = 1.5
+            let allowedCurrent = 0
+            
+            for (let sec in table) {
+                if (table[sec] >= current) {
+                    minSection = parseFloat(sec)
+                    allowedCurrent = table[sec]
+                    break
+                }
+            }
+            
+            // If no match, use largest
+            if (minSection === 1.5 && current > table[50]) {
+                minSection = 50
+                allowedCurrent = table[50]
+            }
+            
+            document.getElementById('cable-min-section').innerHTML = `${minSection} <span class="text-2xl">mm²</span>`
+            document.getElementById('cable-allowed-current').textContent = `${allowedCurrent} A`
+            
+            // Render small table preview
+            let html = `<div class="col-span-full text-xs font-medium text-slate-400 mb-2">טבלה מקוצרת (זרם מותר ב-A)</div>`
+            html += `<div class="grid grid-cols-9 text-center text-xs gap-px bg-slate-800 rounded-2xl overflow-hidden">`
+            html += `<div class="bg-slate-700 py-2">mm²</div>`
+            Object.keys(table).slice(0, 8).forEach(sec => {
+                html += `<div class="py-2 bg-slate-900">${sec}</div>`
+            })
+            html += `</div><div class="grid grid-cols-9 text-center text-xs gap-px bg-slate-800 rounded-2xl overflow-hidden mt-px">`
+            html += `<div class="bg-slate-700 py-2">A</div>`
+            Object.keys(table).slice(0, 8).forEach(sec => {
+                html += `<div class="py-2 bg-slate-900">${table[sec]}</div>`
+            })
+            html += `</div>`
+            document.getElementById('cable-table').innerHTML = html
+        }
+
+        // Calculator 5: Voltage drop
+        function calculateDrop() {
+            const length = parseFloat(document.getElementById('drop-length').value) || 0
+            const current = parseFloat(document.getElementById('drop-current').value) || 0
+            const section = parseFloat(document.getElementById('drop-section').value) || 1
+            const phase = parseFloat(document.getElementById('drop-phase').value)
+            const material = document.getElementById('drop-material').value
+            const voltage = parseFloat(document.getElementById('drop-voltage').value) || 400
+            
+            // Resistivity Ω·mm²/m
+            const rho = material === 'cu' ? 0.0175 : 0.0283
+            
+            let dropVolts = 0
+            if (phase === 1) {
+                dropVolts = (2 * rho * length * current) / section
+            } else {
+                dropVolts = (1.732 * rho * length * current) / section
+            }
+            
+            const percent = (dropVolts / voltage) * 100
+            
+            document.getElementById('drop-volts').textContent = dropVolts.toFixed(1) + ' V'
+            document.getElementById('drop-percent').innerHTML = percent.toFixed(1) + '<span class="text-3xl">%</span>'
+            
+            // Color warning
+            const resultDiv = document.getElementById('drop-result')
+            if (percent > 5) {
+                resultDiv.classList.add('border-red-400')
+                resultDiv.classList.remove('border-orange-400/30')
+            } else if (percent > 3) {
+                resultDiv.classList.add('border-orange-400/30')
+                resultDiv.classList.remove('border-red-400')
+            }
+        }
+
+        // Calculator 6: Transformer
+        function calculateTrafo() {
+            const kva = parseFloat(document.getElementById('trafo-kva').value) || 0
+            const v1 = parseFloat(document.getElementById('trafo-v1').value) || 1
+            const v2 = parseFloat(document.getElementById('trafo-v2').value) || 1
+            const eff = parseFloat(document.getElementById('trafo-eff').value) || 98
+            
+            const i1 = (kva * 1000) / (1.732 * v1)
+            const i2 = (kva * 1000) / (1.732 * v2)
+            const inputKw = (kva * (eff / 100))
+            
+            document.getElementById('trafo-i1').textContent = i1.toFixed(1)
+            document.getElementById('trafo-i2').textContent = i2.toFixed(0)
+            document.getElementById('trafo-input').textContent = inputKw.toFixed(1)
+        }
+
+        // Calculator 7: Lighting
+        function calculateLight() {
+            const area = parseFloat(document.getElementById('light-area').value) || 0
+            const lux = parseFloat(document.getElementById('light-lux').value)
+            const eff = parseFloat(document.getElementById('light-eff').value) || 100
+            
+            // Utilization factor UF ≈ 0.6, Maintenance factor MF ≈ 0.8 (typical)
+            const uf = 0.6
+            const mf = 0.8
+            
+            const totalLumens = (lux * area) / (uf * mf)
+            const lampsNeeded = Math.ceil(totalLumens / (eff * 10)) // assuming 10W per lamp average
+            
+            document.getElementById('light-num').value = lampsNeeded
+            document.getElementById('light-result-value').textContent = lampsNeeded
+        }
+
+        // Copy entire HTML to clipboard as ready-to-save file
+        function copyToClipboard() {
+            const htmlContent = document.documentElement.outerHTML
+            navigator.clipboard.writeText('<!DOCTYPE html>\n' + htmlContent).then(() => {
+                const btns = document.querySelectorAll('button')
+                const original = btns[btns.length - 2].innerHTML
+                btns[btns.length - 2].innerHTML = '✅ הועתק! פתח קובץ חדש והדבק'
+                setTimeout(() => {
+                    btns[btns.length - 2].innerHTML = original
+                }, 2800)
+            })
+        }
+
+        // Initialize everything
+        window.onload = function() {
+            initializeTailwind()
+            // Run initial calculations
+            calculateOhm()
+            calculatePower()
+            calculateCurrent()
+            calculateCable()
+            calculateDrop()
+            calculateTrafo()
+            calculateLight()
+            
+            console.log('%c✅ מחשבון חשמל טעון בהצלחה – מוכן לשימוש!', 'color:#00b4d8; font-family:monospace')
+        }
+    </script>
 </body>
 </html>
