@@ -18,6 +18,46 @@
         .connector-box { border: 2px solid #0066cc; padding: 15px; margin-bottom: 20px; border-radius: 8px; background: #fafafa; }
     </style>
 </head>
+<!-- ══════ Universal offline-cache registration + on-screen verification ══════
+     Paste this EXACT block, unedited, right before </body> in every index.html
+     on the domain. Nothing here needs per-repo changes. -->
+<div id="offline-badge" style="
+  position:fixed; bottom:8px; left:8px; z-index:99999;
+  font:11px/1.4 -apple-system,sans-serif; padding:5px 9px; border-radius:7px;
+  background:rgba(0,0,0,.78); color:#fff; direction:rtl; pointer-events:none;
+  opacity:0; transition:opacity .3s;"></div>
+<script>
+(function(){
+  const badge = document.getElementById('offline-badge');
+  function show(text, color){
+    badge.textContent = text;
+    badge.style.color = color;
+    badge.style.opacity = '1';
+    setTimeout(()=>{ badge.style.opacity = '0'; }, 6000);
+  }
+  if(!('serviceWorker' in navigator)){
+    show('⚠️ הדפדפן הזה לא תומך ב-Service Worker', '#ff6b6b');
+    return;
+  }
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      if(navigator.serviceWorker.controller){
+        // This load was actually served/controlled by the SW → offline-ready NOW.
+        show('✅ מוכן לאופליין (מוגש מהמטמון)', '#3ecf8e');
+      } else {
+        // First-ever visit: installing now, but THIS load came from the network,
+        // not the cache. Reload once (still online) before trusting airplane mode.
+        show('⏳ טוען לראשונה — רענן פעם אחת עוד עם אינטרנט', '#f5a623');
+      }
+      reg.addEventListener('updatefound', () => {
+        console.log('[offline] new version of sw.js found, scope:', reg.scope);
+      });
+    }).catch(err => {
+      show('❌ רישום נכשל: ' + err.message, '#ff6b6b');
+    });
+  });
+})();
+</script>
 <body>
     <h1>🛠 כלי איפיון רתמות חוטים v7 - אורך אוטומטי + חיווט אמיתי</h1>
 
